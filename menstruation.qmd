@@ -1,0 +1,752 @@
+---
+title: "Menstruation Perceptions Study"
+subtitle: "PSY205 Group Project"
+author: Crysta Germany, 
+format: html
+toc: true
+toc-location: left
+---
+
+```{r}
+#| label: library
+#| echo: false
+#| message: false
+library(tidyverse)
+library(janitor)
+```
+
+```{r}
+#| label: load-and-clean
+#| echo: false
+menstruation_raw <- read.csv("mens_update.csv")
+
+menstruation_clean <- menstruation_raw |> 
+  clean_names()|> 
+  rename(
+    age = the_following_questions_are_about_your_age_race_gender_difficulty_doing_some_activities_and_experience_as_a_student_at_duke_university_how_old_are_you, 
+    current_student = are_you_currently_a_student_at_duke_university,
+    has_period = have_you_ever_had_a_menstrual_period,
+    sex = what_is_your_biological_sex,
+    year = what_type_of_student_are_you,
+    home = what_type_of_student_are_you_1,
+    housing = what_type_of_housing_do_you_live_in,
+    gender = which_gender_identity_do_you_most_identify_with_cis_or_cisgender_refers_to_identifying_as_the_gender_assigned_at_birth_while_trans_or_transgender_refers_to_identifying_as_a_gender_different_than_the_one_assigned_at_birth_selected_choice,
+    race = what_racial_ethnic_groups_do_you_most_closely_identify_with_select_all_that_apply_selected_choice, 
+    sch_learn = did_you_have_school_based_menstrual_education,
+    sch_satis = how_well_informed_did_you_feel_in_regard_to_menstruation_after_your_school_based_menstrual_education,
+    bleeding = the_following_are_questions_about_menstruation_where_do_you_think_the_bleeding_from_menstruation_originates_select_one,
+    describe = what_words_would_you_use_to_describe_periods_generally,
+    comfort = how_comfortable_are_you_with_discussing_your_own_or_others_periods,
+    not_afford = have_you_ever_not_been_able_to_afford_menstrual_products_such_as_pads_or_tampons, 
+    year_afford = in_the_last_12_months_how_often_have_you_not_been_able_to_afford_menstrual_products, 
+    avoid_change = do_you_think_people_avoid_changing_menstrual_products_while_on_campus,
+    learn_where = where_did_you_learn_about_periods_growing_up_select_all_that_apply_selected_choice,
+    learn_text = where_did_you_learn_about_periods_growing_up_select_all_that_apply_other_text,
+    purchase = the_following_questions_are_about_your_direct_experiences_with_period_products_have_you_ever_provided_or_purchased_a_period_product_for_someone_else,
+    have_sex = do_you_agree_or_disagree_with_the_following_statements_people_should_feel_comfortable_having_sex_on_their_period,
+    dirty = do_you_agree_or_disagree_with_the_following_statements_menstrual_blood_is_dirty,
+    celebrate = do_you_agree_or_disagree_with_the_following_statements_menarche_a_person_s_very_first_period_is_reason_for_celebration,
+    relig = do_you_agree_or_disagree_with_the_following_statements_while_on_menstruation_one_should_refrain_from_some_religious_activities,
+    code = do_you_agree_or_disagree_with_the_following_statements_code_words_should_be_used_to_describe_periods_aunt_flow_time_of_the_month,
+    mood = do_you_agree_or_disagree_with_the_following_statements_people_can_become_more_irritable_and_depressed_due_to_period_related_needs,
+    normal = do_you_agree_or_disagree_with_the_following_statements_menstruation_is_a_normal_and_healthy_part_of_life,
+    pain = do_you_agree_or_disagree_with_the_following_statements_it_is_normal_to_have_really_painful_periods,
+    beauty = do_you_agree_or_disagree_with_the_following_statements_menstruation_is_a_symbol_of_feminine_beauty, 
+    hidden = do_you_agree_or_disagree_with_the_following_statements_menstrual_products_should_be_hidden_since_they_are_private_hygiene_products,
+    exaggerate= do_you_agree_or_disagree_with_the_following_statements_menstrual_cramps_are_often_exaggerated, 
+    time_off = do_you_agree_or_disagree_with_the_following_statements_menstrual_leave_absence_being_able_to_take_time_off_work_or_school_due_to_menstruation_should_be_available,
+    virginity = do_you_agree_or_disagree_with_the_following_statements_the_use_of_insert_type_menstrual_products_i_e_tampons_menstrual_cups_may_cause_a_loss_of_virginity, 
+    unsanitary = do_you_agree_or_disagree_with_the_following_statements_reusable_cloth_menstrual_pads_are_unsanitary, 
+    expensive = do_you_agree_or_disagree_with_the_following_statements_all_menstrual_products_are_expensive, 
+    why_change_multi = what_are_some_reasons_you_think_people_don_t_change_their_menstrual_product_on_campus_select_all_that_apply, 
+    class_late = do_you_think_people_have_ever_missed_had_to_leave_or_arrived_late_for_class_because_of_menstrual_related_reasons_select_all_that_apply, 
+    where_buy_multi = where_do_you_think_people_purchase_or_access_menstrual_products_selected_choice,
+    where_buy_text = where_do_you_think_people_purchase_or_access_menstrual_products_other_text,
+    where_suggest_multi = if_the_university_were_to_distribute_menstrual_hygiene_products_where_do_you_suggest_we_distribute_them_select_all_that_apply_selected_choice,
+    where_suggest_text = if_the_university_were_to_distribute_menstrual_hygiene_products_where_do_you_suggest_we_distribute_them_select_all_that_apply_other_text
+  ) |> 
+  select(
+    -current_student,
+    -what_racial_ethnic_groups_do_you_most_closely_identify_with_select_all_that_apply_other_text,
+    -learn_text
+  ) |> 
+  mutate(
+    has_period = case_when(
+      has_period == "No" ~ 0, 
+      has_period == "Yes" ~ 1
+    ), 
+    year = case_when(
+      year == "Undergraduate - 1st year" ~ "1st Year", 
+      year == "Undergraduate - 2nd year" ~ "2nd Year", 
+      year == "Undergraduate - 3rd year" ~ "3rd Year", 
+      year == "Undergraduate - 4th year" ~ "4th Year", 
+      year == "Graduate" ~ "Grad", 
+      year == "Other" ~ "Other", 
+    ),
+    housing = case_when(
+      housing == "On-campus Housing (University Owned)" ~ "On",
+      housing == "Off-campus Housing (Privately Owned)" ~ "Off"
+    ), 
+    sex = case_when(
+      sex == "Male" ~ 0, 
+      sex == "Female" ~ 1
+    ), 
+    bleeding = if_else(
+      bleeding == "Uterus", 1, 0), 
+    sch_learn = case_when(
+      sch_learn == "Yes" ~ 1, 
+      sch_learn == "No" ~ 0
+    ), 
+    sch_satis = case_when(
+      sch_satis == "Insufficiently informed" ~ 1, 
+      sch_satis == "Adequately informed" ~ 2, 
+      sch_satis == "Sufficiently informed" ~ 3, 
+      sch_satis == "No school-based education" ~ 4, 
+    ),
+    comfort = case_when(
+      comfort == "Very uncomfortable" ~ 1,
+      comfort == "Moderately uncomfortable" ~ 2,
+      comfort == "Neutral" ~ 3,
+      comfort == "Moderately comfortable" ~ 4,
+      comfort == "Very comfortable" ~ 5
+    ), 
+    not_afford = case_when(
+      not_afford == "Yes" ~ 1,
+      not_afford == "No" ~ 2,
+      not_afford == "Don't Know" ~ 3,
+    ), 
+    year_afford = case_when(
+      year_afford == "Always" ~ 1, 
+      year_afford == "Often" ~ 2,
+      year_afford == "Sometimes" ~ 3,
+      year_afford == "Rarely" ~ 4,
+      year_afford == "Never" ~ 5,
+      year_afford == "N/A" ~ 6
+    ), 
+    avoid_change = case_when(
+      avoid_change == "Yes" ~ 1,
+      avoid_change == "No" ~ 0
+    ), 
+    class_late = case_when(
+      class_late == "Yes" ~ 1,
+      class_late == "No" ~ 0
+    )
+  )
+```
+## Introduction & Literature Review
+
+Menstruation is a routine biological process for many students, yet it remains socially stigmatized and unevenly understood within college environments. While some menstrual resources exist, students’ perceptions of those resources—and the broader campus climate surrounding menstruation—may differ depending on whether they menstruate. On university campuses, menstrual stigma and discomfort discussing menstruation can shape peer interactions, health-related help-seeking behaviors, and the extent to which students perceive their institution as supportive and inclusive (Suleman et al., 2024).
+
+Menstruation remains a relatively understudied area of research, with much of the existing literature narrowly focusing on autonomous adult menstruators and rarely acknowledging non-menstruators or culturally diverse populations. Researchers have found that menstrual stigma, perpetuated by both menstruators and non-menstruators, often arises from inadequate information and education (Stubbs et al., 2008). This stigma contributes to shame, self-objectification, and poor decision-making among menstruators (Stubbs et al., 2008), which can negatively affect educational experiences and overall wellbeing, particularly among college students (Munro et al., 2021).
+
+Research involving non-menstruating individuals remains limited; however, existing findings suggest that males are more likely than females to endorse negative attitudes toward menstruation (Eyring et al., 2010). This disparity may be explained by reduced access to comprehensive education about sexuality and pubertal development, as well as exclusion from menstrual-related conversations (Allen et al., 2010).
+
+Researchers have also examined period poverty, defined as inadequate access to menstrual hygiene products due to factors such as insufficient facilities, limited product availability, financial constraints, and the unpredictable nature of menstruation (Jaafar et al., 2023; Suleman, 2024). Research on period poverty among college students underscores the need for more reliable and expanded access to menstrual products (Morley et al., 2025).
+
+Although menstrual health research is rapidly expanding, several critical gaps remain. Existing studies insufficiently capture the attitudes, experiences, and perceptions of undergraduate students, and rarely include non-female-identifying menstruators, culturally diverse populations, or male-identifying non-menstruators. Additionally, there is a lack of standardized measures to evaluate menstrual attitudes and perceptions, highlighting the need for further scale development.
+
+The present study aims to address these gaps by examining menstrual-related attitudes, perceptions, and experiences among both menstruating and non-menstruating undergraduate students at Duke University. Non-menstruators’ understandings of menstruation remain underexplored yet are essential for addressing menstrual inequities within college settings. Findings from this study may inform future research, support more inclusive educational initiatives, and guide institutional efforts to reduce stigma and improve campus climate.
+
+This study employs an observational, cross-sectional survey design to examine students’ attitudes and perceptions toward menstruation, with particular attention to differences between menstruators and non-menstruators. Data will be collected from Duke University students through an anonymous survey distributed broadly to obtain representation from both groups.
+
+An observational survey design is appropriate given that the study seeks to assess existing attitudes and perceptions rather than test an intervention or establish causality. Because the study examines naturally occurring groups, an experimental design would be neither feasible nor ethical. A cross-sectional approach allows for efficient data collection while preserving anonymity for a potentially sensitive topic, which may encourage more candid responses.
+
+This design enables identification of patterns, perception gaps, and areas of misunderstanding within the campus community. By comparing responses between menstruators and non-menstruators, the study can highlight differences in knowledge, comfort, and attitudes that may contribute to stigma or inclusivity on campus. These findings may inform institutional policies, campus initiatives, and resource allocation.
+
+This study proposes three primary hypotheses: (1) non-menstruators will demonstrate lower levels of knowledge about menstruation than menstruators; (2) non-menstruators and menstruators will differ significantly in menstrual-related attitudes, with non-menstruators endorsing more negative attitudes; and (3) the two groups will differ significantly in their perceptions of menstrual-related experiences on campus.
+
+The anticipated findings have important implications for health education and campus climate. If non-menstruators exhibit lower levels of knowledge and more negative attitudes, these results would support prior research suggesting that exclusion from menstrual education contributes to stigma and misunderstanding (Stubbs et al., 2008). Such findings would underscore the need for more inclusive educational efforts that engage all students, rather than framing menstruation solely as a “women’s issue.” Normalizing menstruation as a routine health topic may help foster a more supportive and equitable campus environment.
+
+Additionally, if discrepancies emerge in how non-menstruators perceive campus menstrual resources, this would provide evidence of a perception gap. Identifying such gaps would be important for improving resource accessibility, institutional communication, and overall campus support systems.
+
+## Methods
+**Participants**
+The proposed quantitative study aims to examine menstrual-related attitudes and perceptions among both menstruating and non-menstruating students at Duke University. Eligible participants include currently enrolled Duke students of any academic level (i.e., undergraduate or graduate) who are at least 18 years of age. Individuals who do not meet these criteria were excluded from participation.
+
+The study employed non-probability convenience and snowball sampling methods to recruit participants. Although these methods may limit the generalizability of findings, they are appropriate given the study’s between-groups design and time and resource constraints, and they facilitated adequate recruitment. The target sample size was 60 participants, with approximately 30 menstruators and 30 non-menstruators to allow for meaningful group comparisons.
+
+Participants were recruited through distribution of a Qualtrics survey link via group messaging platforms (e.g., GroupMe, iMessage, WhatsApp, Slack), course discussion boards, and flyers with QR codes placed in campus buildings and residence hall bathrooms. Due to minimal time and effort required for participation and limited resources, participants did not receive compensation; however, they were thanked for their participation upon survey completion.
+
+**Materials**
+Data were collected through a survey adapted from items developed by a research team at the University of Illinois Chicago (Suleman et al., 2024), which drew from prior research on period poverty. The original measure was designed to assess “students’ menstrual attitudes, experiences, and needs on an urban university campus” (Suleman et al., 2024).
+
+While both the original study and the present study examine menstrual attitudes and perceptions in college settings, the present study places less emphasis on period poverty and greater emphasis on differences between menstruators and non-menstruators. Accordingly, several items related to disability demographics, menstrual product preferences, and purchasing considerations were excluded.
+
+The adapted survey consists of 25 items organized into five sections: (1) informed consent and study overview, (2) student demographics, (3) menstrual knowledge and education, (4) menstrual-related experiences, and (5) menstrual implications and product accessibility on campus. All participants received the same version of the survey regardless of menstruation status. The full survey instrument is provided in 
+[Appendix A](#appendix-a), and variable coding details are provided in [Appendix B](#appendix-b).
+
+The first section addresses informed consent and eligibility. The second section assesses demographic characteristics (e.g., age, race, gender identity, biological sex, year in school, menstruation status). The third section assesses menstrual knowledge, education, and attitudes. The fourth section examines menstrual-related experiences, including affordability and accessibility of menstrual products. The final section assesses perceptions of menstrual impacts and campus resource accessibility.
+
+Survey items were modified to be more inclusive and perception-focused so that they could be answered by both menstruators and non-menstruators. For example, “not applicable” response options were added where appropriate, and some items were reworded to capture perceptions rather than only personal experiences.
+
+Because the survey is an adapted measure, it has not been formally validated, and reliability may be limited. This should be considered when interpreting findings.
+
+**Procedure**
+Participants accessed the anonymous survey via a Qualtrics link or QR code. The first page presented informed consent, including a study overview, eligibility criteria, potential risks (e.g., those associated with internet use), and assurances of confidentiality. Participants were required to indicate (1) whether they were currently enrolled Duke students and (2) whether they consented to participate before proceeding. Those who did not meet eligibility criteria or declined consent did not continue.
+
+Following consent, participants completed the survey in a fixed order. The survey began with demographic questions, including menstruation status (menstruator vs. non-menstruator), which served as the quasi-independent variable. Because menstruation status is a naturally occurring characteristic, participants were not randomly assigned to groups; thus, the study utilized a quasi-experimental, between-subjects design.
+
+Participants then completed items assessing menstrual knowledge and education, attitudes toward menstruation, menstrual-related experiences, and perceptions of campus climate and resource accessibility. Menstrual attitudes were operationalized using Likert-scale items assessing evaluative beliefs and comfort levels. Negatively worded items were reverse-scored, and responses were averaged to create composite attitude scores. Perceptions were assessed using categorical items (e.g., yes/no/I don’t know) examining beliefs about stigma, accessibility, and academic or social impacts.
+
+These composite measures served as the primary dependent variables. The survey was expected to take approximately 10 minutes to complete in a single sitting.
+
+This study did not involve deception or experimental manipulation; therefore, no formal debriefing was required.
+
+**Analyses**
+
+All analyses were conducted using JASP and R software. Data were screened prior to analysis. Participants who did not provide consent, failed to meet eligibility criteria, did not indicate menstruation status, or had substantial missing data (i.e., completion of less than 70% of survey items) were excluded. The final analytic sample consisted of 49 participants.
+
+Descriptive statistics (e.g., means, standard deviations, standard errors, and confidence intervals) were used to summarize demographic characteristics and key variables. Internal consistency (e.g., Cronbach’s alpha) was assessed for multi-item attitude measures, and composite scores were created when reliability was acceptable.
+
+To examine differences between menstruators and non-menstruators, independent-samples t-tests were conducted on primary outcome variables (e.g., knowledge, attitude composites, and perception measures). For variables involving more than two groups (e.g., class year, gender identity), one-way ANOVAs were conducted. Significant omnibus effects were followed by Bonferroni-corrected post hoc comparisons.
+
+Chi-square tests were used to assess associations between categorical variables (e.g., formal education exposure and menstruation status). Among menstruators, correlational analyses were conducted to examine relationships between menstrual history variables and outcomes.
+
+Open-ended responses were analyzed using thematic analysis to identify recurring themes related to attitudes, stigma, education, and support.
+
+To control for Type I error, omnibus tests preceded follow-up analyses, and Bonferroni corrections were applied where appropriate. Statistical significance was evaluated at α = .05.
+
+## Results
+### Demographics
+The final analytic sample consisted of 49 participants. Participants ranged in age from 18 to 22 years (M = 19.69, SD = 0.90). Of the sample, 53.1% identified as menstruators (n = 26) and 46.9% as non-menstruators (n = 23).
+
+In terms of gender identity, 53.1% identified as cisgender women (n = 26), 44.9% as cisgender men (n = 22), and 2.0% as transgender women (n = 1). Reported biological sex was similar, with 53.1% female (n = 26) and 46.9% male (n = 23).
+
+Most participants were undergraduate students, with the majority in their second year (73.5%, n = 36), followed by third-year (12.2%, n = 6), fourth-year (8.2%, n = 4), and first-year students (6.1%, n = 3).
+
+The majority of participants lived on campus (97.6%, n = 40), with a small proportion living off campus (2.4%, n = 1). Most participants were out-of-state students (81.6%, n = 40), followed by in-state (10.2%, n = 5) and international students (8.2%, n = 4).
+
+### Hypothesis 1: Knowledge
+A chi-square test was conducted to examine the relationship between menstruation status and knowledge of menstrual biology. Due to small cell counts, Fisher’s Exact Test was used. Results indicated no significant association between menstruation status and correctly identifying the uterus as the source of menstrual bleeding, p = .655.
+
+```{r}
+#| label: h1-table
+#| message: false
+#| echo: false
+library(knitr)
+library(ggplot2)
+
+kable(
+  table(
+    factor(menstruation_clean$has_period,
+           levels = c(0,1),
+           labels = c("Non-menstruator","Menstruator")),
+    factor(menstruation_clean$bleeding,
+           levels = c(0,1),
+           labels = c("Incorrect","Correct"))
+  ),
+  caption = "Knowledge of Menstrual Biology by Menstruation Status"
+)
+
+ggplot(menstruation_clean,
+       aes(
+         x = factor(has_period,
+                    levels = c(0,1),
+                    labels = c("Non-menstruator","Menstruator")),
+         
+         fill = factor(bleeding,
+                       levels = c(0,1),
+                       labels = c("Incorrect","Correct"))
+       )) +
+  geom_bar(position = "fill") +
+  labs(
+    x = "Menstruation Status",
+    y = "Proportion",
+    fill = "Knowledge"
+  ) + 
+  scale_fill_manual(values = c("#bdbdbd", "#3182bd"))
+```
+
+Both menstruators (92.3%) and non-menstruators (87.0%) demonstrated high levels of correct knowledge, suggesting minimal differences between groups.
+
+Additional analyses examining exposure to school-based menstrual education approached significance, χ²(1, N = 49) = 3.33, p = .068, though this did not reach statistical significance. No significant differences were observed in satisfaction with menstrual education between groups, t(18.80) = -0.46, p = .653.
+
+### Hypothesis 2: Attitudes
+An independent-samples t-test was conducted to examine differences in menstrual attitudes between menstruators and non-menstruators. Results indicated a significant difference in attitude scores between groups, t(36.55) = -3.24, p = .003.
+
+Menstruators (M = 2.79, SD = 0.17) reported more positive attitudes toward menstruation compared to non-menstruators (M = 2.58, SD = 0.26).
+```{r}
+#| label: composites
+#| message: false
+#| echo: false
+#| warning: false
+
+library(dplyr)
+
+menstruation_clean$dirty <- recode(menstruation_clean$dirty, "Disagree" = 1, "Neutral" = 2, "Agree" = 3)
+menstruation_clean$have_sex <- recode(menstruation_clean$have_sex, "Disagree"=1, "Neutral"=2, "Agree"=3)
+menstruation_clean$celebrate <- recode(menstruation_clean$celebrate, "Disagree"=1, "Neutral"=2, "Agree"=3)
+menstruation_clean$mood <- recode(menstruation_clean$mood, "Disagree"=1, "Neutral"=2, "Agree"=3)
+menstruation_clean$normal <- recode(menstruation_clean$normal, "Disagree"=1, "Neutral"=2, "Agree"=3)
+menstruation_clean$time_off <- recode(menstruation_clean$time_off, "Disagree"=1, "Neutral"=2, "Agree"=3)
+menstruation_clean$dirty <- recode(menstruation_clean$dirty, "Disagree"=1, "Neutral"=2, "Agree"=3)
+menstruation_clean$relig <- recode(menstruation_clean$relig, "Disagree"=1, "Neutral"=2, "Agree"=3)
+menstruation_clean$code <- recode(menstruation_clean$code, "Disagree"=1, "Neutral"=2, "Agree"=3)
+menstruation_clean$hidden <- recode(menstruation_clean$hidden, "Disagree"=1, "Neutral"=2, "Agree"=3)
+menstruation_clean$exaggerate <- recode(menstruation_clean$exaggerate, "Disagree"=1, "Neutral"=2, "Agree"=3)
+menstruation_clean$virginity <- recode(menstruation_clean$virginity, "Disagree"=1, "Neutral"=2, "Agree"=3)
+menstruation_clean$unsanitary <- recode(menstruation_clean$unsanitary, "Disagree"=1, "Neutral"=2, "Agree"=3)
+
+menstruation_clean$dirty_r        <- 4 - menstruation_clean$dirty
+menstruation_clean$relig_r        <- 4 - menstruation_clean$relig
+menstruation_clean$code_r         <- 4 - menstruation_clean$code
+menstruation_clean$hidden_r       <- 4 - menstruation_clean$hidden
+menstruation_clean$exaggerate_r   <- 4 - menstruation_clean$exaggerate
+menstruation_clean$virginity_r    <- 4 - menstruation_clean$virginity
+menstruation_clean$unsanitary_r   <- 4 - menstruation_clean$unsanitary
+
+menstruation_clean$attitude_score <- rowMeans(
+  menstruation_clean[, c(
+    "have_sex",
+    "celebrate",
+    "mood",
+    "normal",
+    "time_off",
+    "comfort",
+    "dirty_r",
+    "relig_r",
+    "code_r",
+    "hidden_r",
+    "exaggerate_r",
+    "virginity_r",
+    "unsanitary_r"
+  )],
+  na.rm = TRUE
+)
+```
+```{r}
+#| label: h2-tests
+#| message: false
+#| echo: false
+#| results: false
+summary(menstruation_clean$attitude_score)
+
+t.test(attitude_score ~ has_period, data = menstruation_clean)
+
+tapply(menstruation_clean$attitude_score,
+       menstruation_clean$has_period,
+       sd)
+```
+```{r}
+#| label: h2-graph
+#| message: false
+#| echo: false
+
+ggplot(menstruation_clean,
+       aes(
+         x = factor(has_period,
+                    levels = c(0,1),
+                    labels = c("Non-menstruator","Menstruator")),
+         y = attitude_score
+       )) +
+  geom_boxplot(fill = "#6baed6") +
+  geom_jitter(width = 0.1, alpha = 0.5) +
+  labs(
+    x = "Menstruation Status",
+    y = "Attitude Score"
+  )
+```
+### Hypothesis 3: Perceptions
+```{r}
+#| label: h3-tests
+#| message: false
+#| echo: false
+#| warning: false
+#| results: false
+
+table(menstruation_clean$has_period, menstruation_clean$avoid_change)
+
+chisq.test(menstruation_clean$has_period, menstruation_clean$avoid_change)
+
+table(menstruation_clean$has_period, menstruation_clean$class_late)
+
+chisq.test(menstruation_clean$has_period, menstruation_clean$class_late)
+```
+Chi-square tests were conducted to examine differences in perceptions of menstrual-related experiences on campus. Results indicated no significant association between menstruation status and perceptions that individuals avoid changing menstrual products on campus, χ²(1, N = 49) = 0.02, p = .876.
+
+Similarly, no significant differences were observed in perceptions of menstrual-related academic impacts, p = 1.00, with nearly all participants reporting that individuals may miss, leave, or arrive late to class due to menstrual-related reasons.
+
+### Exploratory Findings
+```{r}
+#| label: ef-tests
+#| results: false
+#| echo: false
+#| message: false
+#| warning: false
+
+table(menstruation_clean$not_afford)
+prop.table(table(menstruation_clean$not_afford)) * 100
+table(menstruation_clean$year_afford)
+```
+```{r}
+#| label: ef-graph
+#| message: false
+#| echo: false
+ggplot(menstruation_clean,
+       aes(
+         x = factor(has_period,
+                    levels = c(0,1),
+                    labels = c("Non-menstruator","Menstruator")),
+         y = comfort
+       )) +
+  geom_boxplot(fill = "#9ecae1") +
+  geom_jitter(width = 0.1, alpha = 0.5) +
+  labs(
+    x = "Menstruation Status",
+    y = "Comfort Discussing Menstruation"
+  )
+```
+Although no significant group differences were observed in perceptions of menstrual experiences, descriptive analyses revealed that affordability was not a commonly reported concern in this sample. Only 2.3% of participants (n = 1) reported having been unable to afford menstrual products, while the vast majority (97.7%) reported no such difficulties.
+```{r}
+#| label: ef-tests-2
+#| results: false
+#| echo: false
+#| message: false
+#| warning: false
+table(menstruation_clean$home, menstruation_clean$sch_learn)
+chisq.test(menstruation_clean$home, menstruation_clean$sch_learn)
+aov(sch_satis ~ home, data = menstruation_clean)
+table(menstruation_clean$home, menstruation_clean$bleeding)
+chisq.test(menstruation_clean$home, menstruation_clean$bleeding)
+prop.table(table(menstruation_clean$dirty)) * 100
+aov(attitude_score ~ gender, data = menstruation_clean)
+t.test(comfort ~ has_period, data = menstruation_clean)
+t.test(comfort ~ sch_learn, data = menstruation_clean)
+cor.test(menstruation_clean$comfort, menstruation_clean$attitude_score)
+```
+
+Although no significant group differences were observed in perceptions of menstrual experiences, descriptive analyses revealed that affordability was not a commonly reported concern in this sample. Only 2.3% of participants (n = 1) reported having been unable to afford menstrual products, while the vast majority (97.7%) reported no such difficulties.
+
+A significant difference in comfort discussing menstruation was observed between groups, with menstruators (M = 4.31) reporting greater comfort than non-menstruators (M = 3.65), t(35.77) = -2.28, p = .029.
+
+Comfort discussing menstruation was also strongly positively correlated with overall attitude scores, r = .69, p < .001, indicating that individuals with more positive attitudes toward menstruation were also more comfortable discussing the topic.
+
+No significant relationships were observed between participants’ residency classification and menstrual knowledge or education variables (all p > .50). Similarly, exposure to school-based menstrual education was not significantly associated with comfort levels, p = .41.
+
+Descriptive analysis of individual attitude items indicated that a majority of participants disagreed with the statement that menstrual blood is dirty (57.1%), although a notable proportion endorsed neutral or agreeing responses, suggesting that some stigmatizing beliefs persist.
+
+### Qualitative/Open-Ended Themes
+Open-ended responses revealed several consistent themes regarding perceptions of menstruation. The most prominent theme was physical discomfort, with many participants describing menstruation as “painful,” “uncomfortable,” or associated with cramps and fatigue.
+
+Participants also frequently emphasized the inconvenience of menstruation, describing it as “annoying,” “disruptive,” or “inconvenient” to daily life. At the same time, many responses reflected an understanding of menstruation as a normal biological process, with participants using terms such as “natural,” “healthy,” and “monthly.” One participant described menstruation as “painful, annoying, and natural,” capturing both the physical burden and normalization of the experience.
+
+Some participants provided more neutral, biological descriptions (e.g., “blood,” “cycle,” or “hormone cycles”), while others expressed more negative or emotionally charged perceptions, including descriptors such as “unfortunate” or “hell on earth.”
+
+Overall, responses suggest that while menstruation is widely recognized as a normal physiological process, it is commonly associated with discomfort and inconvenience.
+
+## Discussion
+For this study, three primary hypotheses were examined. The first hypothesis predicted that non-menstruators would demonstrate lower levels of menstrual knowledge than menstruators, and the third hypothesis predicted group differences in perceptions of menstrual-related experiences on campus. Both hypotheses were not supported. In contrast, the second hypothesis, which predicted differences in menstrual-related attitudes, was supported, with non-menstruators endorsing significantly more negative attitudes toward menstruation.
+
+The lack of significant differences in menstrual knowledge between groups should be interpreted with caution. Knowledge was assessed using a single item measuring participants’ understanding of the biological origin of menstrual bleeding, which provides only a limited assessment of overall menstrual knowledge. While both menstruators and non-menstruators demonstrated high rates of correct responses on this item, the absence of group differences may reflect the narrow scope of the measure rather than true equivalence in knowledge. Nevertheless, these findings suggest that basic awareness of menstrual biology may be relatively widespread in this sample. In contrast to prior research suggesting that inadequate education contributes to menstrual stigma (Stubbs et al., 2008), the present findings indicate that knowledge alone may be insufficient to reduce negative attitudes toward menstruation.
+
+Similarly, no significant differences were observed in perceptions of menstrual-related experiences on campus. Participants across both groups largely agreed that menstruation can impact daily activities, such as attending class, suggesting a shared understanding of its practical implications. This lack of group differences may reflect a relatively uniform campus climate in which these experiences are commonly acknowledged, regardless of menstruation status.
+
+In contrast, attitudes toward menstruation differed significantly between groups, with menstruators reporting more positive attitudes than non-menstruators. This finding aligns with prior research indicating that non-menstruators are more likely to endorse stigmatizing beliefs (Eyring et al., 2010). One possible explanation is that lived experience with menstruation may reduce misconceptions and increase comfort, whereas non-menstruators may have fewer opportunities for direct exposure or open discussion. Supporting this interpretation, exploratory analyses revealed that comfort discussing menstruation was significantly higher among menstruators and strongly associated with more positive attitudes overall. This suggests that comfort and openness may play a key role in shaping menstrual attitudes beyond factual knowledge alone.
+
+Exploratory findings also provided additional context for these results. Despite expectations based on existing literature, very few participants reported experiencing period poverty. This may reflect the relatively high socioeconomic status of many Duke students, as well as the presence of campus initiatives such as menstrual product distribution programs (e.g., Period. Project), which may reduce barriers to access. As a result, financial constraints may not be a primary factor influencing menstrual experiences within this specific campus context.
+
+Qualitative responses further supported these findings, highlighting a complex perception of menstruation among participants. While many described menstruation as a normal and natural biological process, responses frequently emphasized physical discomfort, inconvenience, and disruption to daily life. This suggests that even in the absence of strong stigma or knowledge gaps, menstruation remains a physically and practically burdensome experience for many individuals.
+
+Taken together, these findings suggest that menstrual stigma in this population may be less driven by gaps in knowledge or resource access and more influenced by social attitudes and comfort levels surrounding discussion. Efforts to improve menstrual equity on college campuses may therefore benefit from focusing not only on education and resource provision, but also on fostering open dialogue and reducing discomfort around menstruation as a topic.
+
+## Bibliography
+
+Allen, K. R., Kaestle, C. E., & Goldberg, A. E. (2010). More than just a punctuation mark: How boys and young men learn about menstruation. Journal of Family Issues, 32(2), 129–156. [https://doi.org/10.1177/0192513x10371609](https://doi.org/10.1177/0192513x10371609)
+
+Eyring, J.B., Crandall, A. & Magnusson, B.M. (2023). A Modified Menstrual Attitudes Scale: Heteronormative Attitudes, Sexism, and Attitudes Toward Menstruation in Male and Female Adults. Arch Sex Behav 52, 1535–1547. [https://doi.org/10.1007/s10508-023-02565-y](https://doi.org/10.1007/s10508-023-02565-y).
+
+Jaafar, H., Ismail, S. Y., & Azzeri, A. (2023). Period poverty: A neglected public health issue. Korean Journal of Family Medicine, 44(4), 183–188. [https://doi.org/10.4082/kjfm.22.0206](https://doi.org/10.4082/kjfm.22.0206).
+
+Morley, M., Cava, I., Glass, N., Salwitz, E., Hughes-Wegner, A. T., & DeMaria, A. L. (2025). Addressing period poverty: Evaluating a free period product program in a university setting. Health Promotion Practice. Advance online publication. [https://doi.org/10.1177/15248399241311590](https://doi.org/10.1177/15248399241311590).
+
+Munro, A., Hunter, E., Hossain, S., & Keep, M. (2021). A systematic review of the menstrual experiences of university students and the impacts on their education: A global perspective. PLoS ONE, 16. [https://doi.org/10.1371/journal.pone.0257333](https://doi.org/10.1371/journal.pone.0257333).
+
+Stubbs, M. (2008). Cultural Perceptions and Practices around Menarche and Adolescent Menstruation in the United States. Annals of the New York Academy of Sciences, 1135. [https://doi.org/10.1196/annals.1429.008](https://doi.org/10.1196/annals.1429.008).
+
+Suleman, A., Krishna, S., Krishnakumar, D., Nemoto, K., Nguyễn, M. L. T., & Mehta, S. D. (2024). A pilot survey of students’ menstrual attitudes, experiences, and needs on an urban university campus. Women’s Health, 20, 17455057241254713. [https://doi.org/10.1177/17455057241254713](https://doi.org/10.1177/17455057241254713).
+
+## Appendix
+### Appendix A: Survey Instrument {#appendix-a}
+
+#### Informed Consent and Study Overview
+
+**Q1.** I have read and understand the above consent form, I certify that I am 18 years old or older and, by clicking the submit button to enter the survey, I consent to take part in the study.
+
+- I agree and consent to be in this study.
+
+**Q2.** Are you currently a student at Duke University?
+
+- Yes
+- No
+
+#### Student Demographics
+
+**Q3.** How old are you?
+
+- Options range from 17 to 30 years old
+
+**Q4.** What racial/ethnic groups do you most closely identify with? (Select all that apply)
+
+- African American
+- Black
+- North African
+- American Indian or Alaska Native
+- East Asian
+- North Asian
+- South Asian
+- Central Asian
+- Indian
+- Hispanic or Latino
+- Middle Eastern
+- Native Hawaiian or Other Pacific Islander
+- White
+- Other
+
+**Q5.** Have you ever had a menstrual period?
+
+- Yes
+- No
+
+**Q6.** Which gender identity do you most identify with?
+
+- Cis-woman
+- Cis-man
+- Gender-nonconforming/non-binary/expansive
+- Trans-woman
+- Trans-man
+- Other
+
+**Q7.** What is your biological sex?
+
+- Male
+- Female
+- Non-binary / third gender
+- Prefer not to say
+
+**Q8.** What type of student are you?
+
+- Undergraduate - 1st year
+- Undergraduate - 2nd year
+- Undergraduate - 3rd year
+- Undergraduate - 4th year
+- Graduate
+- Other student
+
+**Q9.** What type of housing do you live in?
+
+- On-campus Housing (University Owned)
+- Off-campus Housing (Privately Owned)
+
+**Q10.** What type of student are you?
+
+- International student
+- In-state student
+- Out-of-state student
+
+#### Menstrual Knowledge and Education
+
+**Q11.** Where did you learn about periods growing up? (Select all that apply)
+
+- Family
+- Friends
+- Doctor or other health care provider
+- School/Teacher
+- Internet/Websites/Search Engines
+- Social Media (e.g., Instagram, Facebook)
+- TV
+- Magazines or books
+- Religious institutions
+- Other
+- I don't know
+
+**Q12.** Where do you think the bleeding from menstruation originates? (Select one)
+
+- Abdomen
+- Uterus
+- Vagina
+- Urinary tract
+- Ovaries
+- None of the above
+- Unsure
+
+**Q13.** Did you have school-based menstrual education?
+
+- Yes
+- No
+
+**Q14.** How well-informed did you feel in regard to menstruation after your school-based menstrual education?
+
+- Insufficiently informed
+- Adequately informed
+- Sufficiently informed
+- I did not have school-based menstrual education
+
+**Q15.** What words would you use to describe periods generally?
+
+- Open response box
+
+**Q16.** How comfortable are you with discussing your own or others' periods?
+
+- Very uncomfortable
+- Moderately uncomfortable
+- Neutral
+- Moderately comfortable
+- Very comfortable
+
+**Q17.** Do you agree or disagree with the following statements?
+
+- Agree
+- Neutral
+- Disagree
+```{r}
+#| label: agree-disagree
+#| echo: false
+library(knitr)
+library(tibble)
+
+agree_disagree <- tibble(
+  Variable = c(
+    "People should feel comfortable having sex on their period.",
+    "Menstrual blood is dirty.",
+    "Menarche (a person's very first period) is reason for celebration.",
+    "While on menstruation, one should refrain from some religious activities.",
+    "Code words should be used to describe periods ('Aunt Flow'; 'time of the month').",
+    "People can become more irritable and depressed due to period-related needs.",
+    "Menstruation is a normal and healthy part of life.",
+    "It is normal to have really painful periods.",
+    "Menstruation is a symbol of feminine beauty.",
+    "Menstrual products should be hidden since they are private, hygiene products.",
+    "Menstrual cramps are often exaggerated.",
+    "Menstrual leave/absence (being able to take time off work or school due to menstruation) should be available.",
+    "The use of insert-type menstrual products (i.e., tampons, menstrual cups) may cause a loss of virginity.",
+    "Reusable (cloth) menstrual pads are unsanitary.",
+    "All menstrual products are expensive."
+  ),
+  Scoring = c(
+    "Keep",
+    "Reverse-score",
+    "Keep",
+    "Reverse-score",
+    "Reverse-score",
+    "Keep",
+    "Keep",
+    "Reverse-score",
+    "Exclude or analyze separately",
+    "Reverse-score",
+    "Reverse-score",
+    "Keep",
+    "Reverse-score",
+    "Reverse-score",
+    "Exclude or analyze separately"
+  )
+)
+
+kable(agree_disagree)
+```
+#### Direct Menstrual-Related Experiences
+
+**Q18.** Have you ever provided or purchased a period product for someone else?
+
+- Yes, for a friend
+- Yes, for a family member
+- Yes, for a partner/spouse
+- Yes, for someone I did not know (for example, in a public bathroom)
+- No, never before
+
+**Q19.** Have you ever not been able to afford menstrual products (such as pads or tampons)?
+
+- Yes
+- No
+- Don't know
+
+**Q20.** In the last 12 months, how often have you not been able to afford menstrual products?
+
+- Often
+- Sometimes
+- Rarely
+- Never
+- N/A
+
+#### Menstrual Implications and Product Accessibility on Duke University Campus
+
+**Q21.** Do you think people avoid changing menstrual products while on campus?
+
+- Yes
+- No
+
+**Q22.** What are some reasons you think people don't change their menstrual product on campus? (Select all that apply)
+
+- Worrying that someone might hear or see
+- Not having another menstrual product available
+- Not having enough time
+- The toilet facilities are not sanitary
+- No place to dispose of or empty a period product
+- Other
+
+**Q23.** Do you think people have ever missed, had to leave, or arrived late for class because of menstrual-related reasons?
+
+- Yes
+- No
+- I don't know
+
+**Q24.** Where do you think people purchase or access menstrual products?
+
+- University Bookstore
+- Wellness Center
+- Student bathrooms
+- Dorms
+- Campus convenience store
+- Other
+
+**Q25.** If the university were to distribute menstrual hygiene products, where do you suggest they be distributed? (Select all that apply)
+
+- University Bookstore
+- Wellness Center
+- Student bathrooms
+- Dorms
+- Campus convenience store
+- Other
+
+### Appendix B: Main Variables {#appendix-b}
+```{r}
+#| label: main-variables
+#| echo: false
+
+library(knitr)
+library(tibble)
+
+main_vars <- tibble(
+  Variable = c(
+    "has_period",
+    "bleeding",
+    "sch_learn",
+    "sch_satis",
+    "comfort",
+    "attitude_score",
+    "avoid_change",
+    "class_late"
+  ),
+  Type = c(
+    "Binary",
+    "Binary",
+    "Binary",
+    "Ordinal",
+    "Ordinal",
+    "Composite (continuous)",
+    "Binary",
+    "Binary"
+  ),
+  Description = c(
+    "Menstruation status (0 = Non-menstruator, 1 = Menstruator)",
+    "Knowledge of menstrual biology (0 = Incorrect/Unsure, 1 = Correct)",
+    "Learned about menstruation in school (0 = No, 1 = Yes)",
+    "Satisfaction with menstrual education",
+    "Comfort discussing menstruation",
+    "Composite score of menstrual attitudes (higher = more positive attitudes)",
+    "Perception that people avoid changing products on campus",
+    "Perceived academic impact of menstruation"
+  )
+)
+
+kable(main_vars, format = "html", table.attr = "style='width:70%;'")
+```
